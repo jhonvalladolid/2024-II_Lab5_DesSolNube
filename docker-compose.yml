@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nodejs
+    container_name: valladolid_nodejs
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_HOSTNAME=db_valladolid
+      - MONGO_PORT=${MONGO_PORT}
+      - MONGO_DB=${MONGO_DB}
+    ports:
+      - "80:8080"
+    volumes:
+      - .:/home/node/app
+      - valladolid_node_modules:/home/node/app/node_modules
+    networks:
+      - valladolid_network
+    command: ./wait-for.sh db_valladolid:27017 -- /home/node/app/node_modules/.bin/nodemon app.js
+
+  db:
+    image: mongo
+    container_name: db_valladolid
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+    volumes:
+      - valladolid_dbdata:/data/db
+    networks:
+      - valladolid_network
+
+networks:
+  valladolid_network:
+    driver: bridge
+
+volumes:
+  valladolid_dbdata:
+  valladolid_node_modules:
+
